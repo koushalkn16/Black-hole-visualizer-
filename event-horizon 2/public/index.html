@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVENT HORIZON — Experience Gravity. Bend Light. Explore the Impossible.</title>
+<meta name="description" content="An interactive instrument for seeing how a black hole bends light. Aim a beam at Sagittarius A* and watch general relativity decide whether it escapes, orbits or falls in — computed, not animated.">
+<meta name="theme-color" content="#030308">
+<meta property="og:title" content="EVENT HORIZON — Experience Gravity. Bend Light. Explore the Impossible.">
+<meta property="og:description" content="Aim a beam of light at a black hole. Watch it bend, orbit or vanish — computed live with general relativity.">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Sora:wght@200;300;400&family=IBM+Plex+Mono:wght@300;400;500&family=Manrope:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<a class="skip" href="#sim">Skip to the simulation</a>
+<div class="loader" id="loader" role="status" aria-live="polite"><div class="lring"></div><div class="ltext" id="loader-text">Initialising physics engine…</div></div>
+<div class="scrollbar" id="scrollbar"></div>
+
+<nav class="nav" id="nav" aria-label="Main">
+  <a class="brand" href="#top"><i></i>EVENT HORIZON</a>
+  <div class="links">
+    <a href="#sim">Simulator</a><a href="#missions">Missions</a><a href="#lab">Gravity Lab</a><a href="#validation">Validation</a>
+  </div>
+  <button class="btn small demo-btn" id="demo-open" type="button">▶ Judge demo · 90 s</button>
+</nav>
+
+<main>
+<!-- =============== 1 · CINEMATIC INTRODUCTION =============== -->
+<header class="hero" id="top">
+  <div class="fallback" id="fallback" hidden></div>
+  <canvas id="bh" aria-label="Ray-traced black hole" role="img"></canvas>
+  <canvas id="dust" aria-hidden="true"></canvas>
+  <div class="hud tl"><span class="tick"></span>Sagittarius A* · <b>4.30 × 10⁶ M☉</b> · <b>8.28 kpc</b></div>
+  <div class="hud tr">R<sub>s</sub> <b id="h-rs">—</b> · shadow <b id="h-sh">—</b></div>
+  <div class="hud bl">Background: GPU ray-trace through curved spacetime</div>
+  <div class="hud br"><span id="h-fps">—</span> · <button class="lowpow" id="lowpow" type="button" aria-pressed="false">Low-power: off</button></div>
+  <div class="hero-copy">
+    <h1 id="title">EVENT HORIZON</h1>
+    <p class="tagline">Experience gravity. Bend light. Explore the impossible.</p>
+    <p class="purpose">Aim a beam of light at the black hole in the centre of our galaxy. General relativity decides — live — whether it bends, orbits, or never comes back.</p>
+    <div class="ctas"><a class="btn prime" href="#sim" id="enter">Enter the simulation</a></div>
+  </div>
+  <div class="scrollcue" aria-hidden="true"><i></i></div>
+</header>
+
+<!-- =============== 2 · WHAT IS HAPPENING TO LIGHT =============== -->
+<section class="s" id="light" aria-labelledby="light-h">
+  <div class="wrap two">
+    <div class="reveal">
+      <div class="eyebrow">01 · The idea in 30 seconds</div>
+      <h2 id="light-h">What is happening to light?</h2>
+      <p class="lead">Mass curves spacetime. Light always travels the straightest path it can — but near a black hole the straightest path is curved.</p>
+      <ol class="fates">
+        <li><span class="dot esc"></span><div><b>Far away, light bends.</b> The closer it passes, the harder it turns.</div></li>
+        <li><span class="dot crit"></span><div><b>At 1.5 R<sub>s</sub> light can orbit.</b> This is the <em>photon sphere</em> — a knife-edge where light circles the hole.</div></li>
+        <li><span class="dot cap"></span><div><b>Any closer, and it is gone.</b> Aim inside the critical distance b<sub>c</sub> = 2.598 R<sub>s</sub> and the beam spirals across the event horizon.</div></li>
+      </ol>
+      <p class="note">That one number, b<sub>c</sub>, sets the size of the black hole's shadow — the dark disc the Event Horizon Telescope observed in 2017 and published in 2022.</p>
+      <details class="sci"><summary>Scientific explanation</summary>
+        <p>For a non-rotating (Schwarzschild) black hole of mass M, a light ray with impact parameter b obeys the exact orbit equation <code>d²u/dφ² + u = 3GMu²/c²</code>, with u = 1/r. Without the right-hand side, the solution is a straight line; that term is the whole of general relativity's effect on the path.</p>
+        <p>Light behaves as if it moves in an effective potential V(r) = (1 − R<sub>s</sub>/r)/r², which peaks at r = 1.5 R<sub>s</sub> (the photon sphere). A beam whose "energy level" 1/b² is above that peak goes over the barrier and falls in. Setting 1/b<sub>c</sub>² = V<sub>max</sub> gives the exact critical value b<sub>c</sub> = (3√3/2) R<sub>s</sub>.</p>
+      </details>
+    </div>
+    <figure class="reveal fig">
+      <canvas id="intro-cv" aria-label="Three computed light paths: one escapes, one circles the photon sphere, one is captured" role="img"></canvas>
+      <figcaption>Three beams, computed live. Same black hole, same speed, different aim.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- =============== 3 · INTERACTIVE SIMULATION =============== -->
+<section class="s" id="sim" aria-labelledby="sim-h">
+  <div class="wrap">
+    <div class="head reveal">
+      <div class="eyebrow">02 · The instrument</div>
+      <h2 id="sim-h">Aim the beam</h2>
+      <p class="lead">Move the slider. Every path is solved from Einstein's equations as you drag.</p>
+    </div>
+    <div class="simgrid reveal">
+      <div class="stage">
+        <canvas id="sim-cv" aria-label="Light trajectory around the black hole" role="img"></canvas>
+        <div class="stage-3d" id="obs" hidden>
+          <canvas id="obs-rt"></canvas><canvas id="obs-3d"></canvas>
+          <div class="ov tl">
+            <div class="panel"><div class="row">
+              <button class="btn small" data-k="A" data-launch="A" type="button"><i></i>A</button>
+              <button class="btn small" data-k="B" data-launch="B" type="button"><i></i>B</button>
+              <button class="btn small" data-k="C" data-launch="C" type="button"><i></i>C</button>
+              <button class="btn small" data-k="U" data-launch="U" type="button"><i></i>Yours</button>
+              <button class="btn small" data-launch="all" type="button">All</button></div></div>
+            <div class="chip" id="obs-st-A" style="--k:var(--cap)"><b>A</b>b = 2.0 · <em>—</em></div>
+            <div class="chip" id="obs-st-B" style="--k:var(--crit)"><b>B</b>b = 2.6 · <em>—</em></div>
+            <div class="chip" id="obs-st-C" style="--k:var(--esc)"><b>C</b>b = 10 · <em>—</em></div>
+            <div class="chip" id="obs-st-U" style="--k:#fff"><b>U</b>b = <span id="obs-ub">—</span> · <em>—</em></div>
+          </div>
+          <div class="ov tr"><div class="panel">
+            <div class="row" style="justify-content:flex-end">
+              <button class="btn small on" data-cam="cinematic" type="button">Cinematic</button><button class="btn small" data-cam="edge" type="button">Edge-on</button><button class="btn small" data-cam="top" type="button">Top</button><button class="btn small" data-cam="close" type="button">Close</button>
+            </div>
+            <div class="row" style="justify-content:flex-end;margin-top:6px">
+              <button class="btn small" id="obs-lens" type="button">Lensed sky: off</button><button class="btn small on" id="obs-ps" type="button">Photon sphere</button><button class="btn small on" id="obs-disc" type="button">Disc</button><button class="btn small" id="obs-rot" type="button">Orbit</button><button class="btn small" id="obs-reset" type="button">Reset view</button>
+            </div></div></div>
+          <div class="ov bl"><div class="panel legal"><b class="d">Computed:</b> beams, horizon, photon sphere and ISCO. "Lensed sky" adds a ray-traced background. Drag · scroll · right-drag.</div><div class="panel legal" id="obs-cam">—</div></div>
+          <div class="obs-loading" id="obs-loading">Loading 3D engine…</div>
+        </div>
+        <div class="stage-tools">
+          <div class="seg mini" role="tablist" aria-label="View"><button class="on" id="v2d" type="button" role="tab" aria-selected="true">2D exact</button><button id="v3d" type="button" role="tab" aria-selected="false">3D</button></div>
+          <button class="btn small" id="zoom" type="button">Zoom: 6 R<sub>s</sub></button>
+        </div>
+        <div class="verdict" id="verdict" aria-live="polite"><span class="vbadge" id="v-badge">—</span><span id="v-line">—</span></div>
+      </div>
+
+      <aside class="controls" aria-label="Simulation controls">
+        <label class="ctl-label" for="b-range">Impact parameter <span class="sym">b</span> <span class="hint">how far off-centre the beam is aimed</span></label>
+        <div class="bpair">
+          <input type="range" id="b-range" min="1" max="15" step="0.0001" aria-describedby="b-err">
+          <input type="number" id="b-num" step="0.0001" min="0.01" max="1000" aria-label="Impact parameter in Schwarzschild radii">
+          <span class="unit">R<sub>s</sub></span>
+        </div>
+        <div class="err" id="b-err" role="alert"></div>
+        <div class="row presets">
+          <button class="btn small" data-k="A" data-b="2.0" type="button"><i></i>A · 2.0</button>
+          <button class="btn small" data-k="B" data-b="2.6" type="button"><i></i>B · 2.6</button>
+          <button class="btn small" data-k="C" data-b="10" type="button"><i></i>C · 10</button>
+          <button class="btn small" data-b="bc-" type="button">b<sub>c</sub> − 0.001</button>
+          <button class="btn small" data-b="bc+" type="button">b<sub>c</sub> + 0.0001</button>
+        </div>
+
+        <dl class="readout" id="readout"></dl>
+        <p class="explain" id="explain" aria-live="polite">—</p>
+
+        <div class="potential"><div class="plabel">Why: the photon's energy vs the gravitational barrier</div><canvas id="pot-cv" aria-label="Effective potential chart"></canvas></div>
+
+        <div class="row actions">
+          <button class="btn small" id="pin" type="button">＋ Pin to compare</button>
+          <button class="btn small" id="unpin" type="button">Clear pins</button>
+          <button class="btn small" id="reset" type="button">↺ Reset experiment</button>
+        </div>
+        <div class="pins" id="pins"></div>
+        <details class="sci"><summary>How these numbers are computed</summary>
+          <p><span class="tag exact">EXACT</span> closed-form results: R<sub>s</sub> = 2GM/c², b<sub>c</sub> = 3√3 GM/c², the closest approach (largest root of b² = r³/(r − R<sub>s</sub>)), and Darwin's elliptic-integral deflection.</p>
+          <p><span class="tag rk4">RK4</span> the path itself: 4th-order Runge–Kutta on d²u/dφ² + u = 3Mu², step 0.002 rad, launched from 10⁶ M. Captured when it reaches R<sub>s</sub>, escaped when it returns to its start radius.</p>
+          <p><span class="tag approx">APPROX</span> weak-field deflection 2R<sub>s</sub>/b, shown to reveal where it fails.</p>
+          <p>Constants: G = 6.6743 × 10⁻¹¹ m³ kg⁻¹ s⁻² · c = 299 792 458 m/s · M☉ = 1.98847 × 10³⁰ kg · 1 kpc = 3.0857 × 10¹⁹ m · 1 μas = 4.848 × 10⁻¹² rad. Sgr A*: 4.30 × 10⁶ M☉ at 8.28 kpc.</p>
+        </details>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- =============== 4 · MISSIONS =============== -->
+<section class="s" id="missions" aria-labelledby="mis-h">
+  <div class="wrap">
+    <div class="head reveal">
+      <div class="eyebrow">03 · Guided experiments</div>
+      <h2 id="mis-h">Mission: cross the event horizon</h2>
+      <p class="lead">Three short experiments. Each has a goal — reach it and the instrument tells you what you just discovered.</p>
+    </div>
+    <div class="mtabs reveal" role="tablist" aria-label="Missions">
+      <button class="mtab on" data-m="1" role="tab" aria-selected="true" type="button"><span>01</span>Bend the light<i class="mdone" aria-hidden="true"></i></button>
+      <button class="mtab" data-m="2" role="tab" aria-selected="false" type="button"><span>02</span>Challenge the photon sphere<i class="mdone" aria-hidden="true"></i></button>
+      <button class="mtab" data-m="3" role="tab" aria-selected="false" type="button"><span>03</span>Recreate Interstellar<i class="mdone" aria-hidden="true"></i></button>
+    </div>
+
+    <!-- mission 1 -->
+    <div class="mission reveal" id="m1" role="tabpanel">
+      <div class="mtext">
+        <div class="obj"><span>Objective</span>Bend a beam of light by more than 90° — without losing it to the black hole.</div>
+        <p>Start far away and bring the beam closer. Watch how quickly the bending grows.</p>
+        <div class="obs-live" aria-live="polite"><span>Observation</span><div id="m1-obs">—</div></div>
+        <div class="concl" id="m1-concl" hidden><span>Conclusion</span>Bending is not proportional to closeness. Far out it follows the gentle 2R<sub>s</sub>/b rule — the same physics that bent starlight around the Sun in 1919. Near the hole the extra term in Einstein's equation takes over and the turn grows explosively, until the beam can be bent by any angle at all.</div>
+        <div class="row"><button class="btn small" data-reveal="1" type="button">Show conclusion</button><button class="btn small" data-next="2" type="button">Next mission →</button></div>
+      </div>
+      <div class="mexp">
+        <canvas id="m1-cv" aria-label="Mission 1 experiment" role="img"></canvas>
+        <label class="ctl-label" for="m1-b">Distance of aim <span class="sym">b</span>: <b id="m1-bv">—</b></label>
+        <input type="range" id="m1-b" min="1.5" max="25" step="0.01" value="15">
+        <div class="mstat"><div><span>Bending α</span><b id="m1-a">—</b></div><div><span>Weak-field rule</span><b id="m1-w">—</b></div><div><span>Goal</span><b id="m1-goal">&gt; 90°</b></div></div>
+      </div>
+    </div>
+
+    <!-- mission 2 -->
+    <div class="mission" id="m2" role="tabpanel" hidden>
+      <div class="mtext">
+        <div class="obj"><span>Objective</span>Make light circle the black hole at least twice — and still escape.</div>
+        <p>Light can only orbit on a knife-edge. Too close and it falls in; too far and it barely loops. Find the edge.</p>
+        <div class="obs-live" aria-live="polite"><span>Observation</span><div id="m2-obs">—</div></div>
+        <div class="concl" id="m2-concl" hidden><span>Conclusion</span><div id="m2-cc"></div></div>
+        <div class="row"><button class="btn small" data-reveal="2" type="button">Show conclusion</button><button class="btn small" data-next="3" type="button">Next mission →</button></div>
+      </div>
+      <div class="mexp">
+        <canvas id="m2-cv" aria-label="Mission 2 experiment" role="img"></canvas>
+        <label class="ctl-label" for="m2-b">Aim <span class="sym">b</span>: <b id="m2-bv">—</b></label>
+        <input type="range" id="m2-b" min="2.56" max="2.70" step="0.00001" value="2.65">
+        <div class="row nudge">
+          <span class="hint">Fine-tune</span>
+          <button class="btn small" data-nudge="-0.001" type="button">−10⁻³</button><button class="btn small" data-nudge="-0.00001" type="button">−10⁻⁵</button>
+          <button class="btn small" data-nudge="0.00001" type="button">+10⁻⁵</button><button class="btn small" data-nudge="0.001" type="button">+10⁻³</button>
+        </div>
+        <div class="mstat"><div><span>Turns around the hole</span><b id="m2-t">—</b></div><div><span>Fate</span><b id="m2-f">—</b></div><div><span>Distance from b<sub>c</sub></span><b id="m2-d">—</b></div></div>
+      </div>
+    </div>
+
+    <!-- mission 3 -->
+    <div class="mission" id="m3" role="tabpanel" hidden>
+      <div class="mtext">
+        <div class="obj"><span>Objective</span>Make one hour on Miller's planet last 7 years on Earth — a time-dilation factor of about 61,000.</div>
+        <p>Our simulator models a <b>non-spinning</b> (Schwarzschild) black hole. Gargantua in <em>Interstellar</em> is a <b>rapidly spinning</b> (Kerr) black hole — a different solution of Einstein's equations. Spin the hole and see what changes.</p>
+        <div class="compare">
+          <div><span>Schwarzschild · our simulator</span><ul><li>Spin a = 0, perfectly round shadow</li><li>Closest stable orbit 6 GM/c²</li><li>Best <em>stable</em>-orbit time dilation <b>×1.41</b></li></ul></div>
+          <div><span>Kerr · Gargantua</span><ul><li>Spin close to the maximum (real holes: ≤ ≈ 0.998)</li><li>Space is dragged around the hole</li><li>Shadow flattened on one side</li></ul></div>
+        </div>
+        <div class="obs-live" aria-live="polite"><span>Observation</span><div id="m3-obs">—</div></div>
+        <div class="concl" id="m3-concl" hidden><span>Conclusion</span><div id="m3-cc"></div></div>
+        <div class="row"><button class="btn small" data-reveal="3" type="button">Show conclusion</button><a class="btn small" href="#lab">On to the Gravity Lab →</a></div>
+      </div>
+      <div class="mexp">
+        <canvas id="m3-cv" aria-label="Kerr black hole shadow and orbit radii" role="img"></canvas>
+        <label class="ctl-label" for="m3-s">Spin <span class="sym">a</span> (fraction of maximum): <b id="m3-av">—</b></label>
+        <input type="range" id="m3-s" min="0" max="15" step="0.01" value="0">
+        <div class="mstat"><div><span>Planet orbit (prograde ISCO)</span><b id="m3-r">—</b></div><div><span>Time dilation there</span><b id="m3-x">—</b></div><div><span>1 hour on the planet =</span><b id="m3-h">—</b></div></div>
+        <p class="tiny"><span class="tag exact">EXACT</span> Kerr circular-orbit formulas (Bardeen, Press &amp; Teukolsky 1972) and shadow outline (Bardeen 1973), viewed from the equatorial plane. The planet follows the innermost stable prograde orbit.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============== 5 · GRAVITY LAB =============== -->
+<section class="s" id="lab" aria-labelledby="lab-h">
+  <div class="wrap">
+    <div class="head reveal">
+      <div class="eyebrow">04 · The Gravity Lab</div>
+      <h2 id="lab-h">Newton vs Einstein</h2>
+      <p class="lead">Fix the beam. Change the black hole. See where Newton's gravity and Einstein's disagree — and by how much.</p>
+    </div>
+    <div class="labgrid reveal">
+      <div class="stage">
+        <canvas id="lab-cv" aria-label="Gravity Lab: Newtonian and relativistic light paths" role="img"></canvas>
+        <div class="lab-legend"><span><i class="gr"></i>General relativity</span><span><i class="nw"></i>Newton (light as a fast particle)</span></div>
+        <div class="verdict" id="lab-verdict" aria-live="polite">—</div>
+      </div>
+      <aside class="controls">
+        <div class="seg" id="lab-presets" role="group" aria-label="Black hole preset">
+          <button data-p="sgr" class="on" type="button">Sgr A*</button><button data-p="m87" type="button">M87*</button><button data-p="stellar" type="button">10 M☉</button>
+        </div>
+        <label class="ctl-label" for="lab-m">Black hole mass <b id="lab-mv">—</b></label>
+        <input type="range" id="lab-m" min="-1" max="1" step="0.001" value="0">
+        <label class="ctl-label" for="lab-b">Beam passes at <b id="lab-bv">—</b> <span class="hint">fixed distance — stays put when mass changes</span></label>
+        <input type="range" id="lab-b" min="0" max="1" step="0.0005" value="0.5">
+        <label class="ctl-label" for="lab-d">Observer distance <b id="lab-dv">—</b></label>
+        <input type="range" id="lab-d" min="-1" max="1" step="0.001" value="0">
+        <div class="seg" id="lab-model" role="group" aria-label="Model"><button data-v="both" class="on" type="button">Both</button><button data-v="gr" type="button">Einstein</button><button data-v="newton" type="button">Newton</button></div>
+        <table class="cmp" id="lab-table" aria-label="Model comparison"></table>
+        <details class="sci"><summary>Assumptions of each model</summary>
+          <p><b>Newton.</b> Light is treated as a particle moving at speed c in flat space with absolute time, pulled by an inverse-square force. Its path is an exact hyperbola: deflection 2·arcsin(1/e), with e = √(1 + (bc²/GM)²). Newton has no horizon and no photon sphere — but Michell (1783) noticed that a "dark star" traps light inside 2GM/c², the same R<sub>s</sub>.</p>
+          <p><b>Einstein.</b> Light follows a null geodesic of the Schwarzschild spacetime (non-spinning, uncharged black hole, observer far away). Path from RK4, checked against Darwin's exact formula.</p>
+          <p><b>Why they differ.</b> In general relativity space itself is curved as well as time, and the curvature grows faster than 1/r² close in. Far away this simply doubles the bending; near the hole it creates the photon sphere and the horizon, which have no Newtonian counterpart.</p>
+        </details>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- =============== 6 · VALIDATION =============== -->
+<section class="s" id="validation" aria-labelledby="val-h">
+  <div class="wrap">
+    <div class="head reveal">
+      <div class="eyebrow">05 · Scientific validation</div>
+      <h2 id="val-h">Every number, checked</h2>
+      <p class="lead">These checks run in your browser right now. The same file runs on the command line with <code>npm test</code>.</p>
+    </div>
+    <div class="vbar reveal">
+      <div><span class="vk">Checks executed</span><b id="v-count">—</b></div>
+      <div><span class="vk">Run time</span><b id="v-ms">—</b></div>
+      <div><span class="vk">Last run</span><b id="v-at">—</b></div>
+      <div class="vact"><button class="btn prime small" id="v-run" type="button">▶ Run again</button><button class="btn small" id="v-copy" type="button">Copy results</button></div>
+    </div>
+    <div class="legend reveal">
+      <span><i class="tag exact">EXACT</i>closed-form formula vs reference</span>
+      <span><i class="tag rk4">RK4</i>numerical result vs exact answer</span>
+      <span><i class="tag approx">APPROX</i>shortcut formula vs exact — shows its error</span>
+      <span><i class="tag obs">OBS</i>prediction vs telescope measurement (1σ)</span>
+    </div>
+    <div class="tablewrap reveal"><table id="v-table" aria-label="Validation results"></table></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div>EVENT HORIZON · [TeamName]</div>
+  <div>Endurance — A Sprint Hackathon · Equinox — The Space Club</div>
+  <div><a href="#" id="demo-open-2">▶ Judge demo</a></div>
+</footer>
+
+<!-- judge demonstration overlay -->
+<div class="demo" id="demo" hidden role="dialog" aria-modal="false" aria-label="Judge demonstration">
+  <div class="demo-bar">
+    <div class="demo-step" id="demo-step">—</div>
+    <div class="demo-cap" id="demo-cap" aria-live="assertive">—</div>
+    <div class="demo-ctl">
+      <button class="btn small" id="demo-prev" type="button" aria-label="Previous step">◀</button>
+      <button class="btn small" id="demo-pause" type="button">Pause</button>
+      <button class="btn small" id="demo-next" type="button" aria-label="Next step">▶</button>
+      <button class="btn small" id="demo-exit" type="button">Exit · Esc</button>
+    </div>
+    <div class="demo-prog"><i id="demo-prog"></i></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/physics.js"></script>
+<script src="js/tests.js"></script>
+<script src="js/raytracer.js"></script>
+<script src="js/view.js"></script>
+<script src="js/hero.js"></script>
+<script src="js/app.js"></script>
+<script src="js/demo.js"></script>
+</body>
+</html>
